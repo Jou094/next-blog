@@ -6,14 +6,9 @@ import { useEffect, useState } from "react";
 import "react-quill/dist/quill.bubble.css";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
-import { app } from "@/utils/firebase";
+
 import ReactQuill from "react-quill";
+import { uploadFile } from "@/utils/supabaseClient";
 
 const WritePage = () => {
   const { status } = useSession();
@@ -27,38 +22,24 @@ const WritePage = () => {
   const [catSlug, setCatSlug] = useState("");
 
   useEffect(() => {
-    const storage = getStorage(app);
-    const upload = () => {
-      const name = new Date().getTime() + file.name;
-      const storageRef = ref(storage, name);
-
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log("Upload is " + progress + "% done");
-          switch (snapshot.state) {
-            case "paused":
-              console.log("Upload is paused");
-              break;
-            case "running":
-              console.log("Upload is running");
-              break;
-          }
-        },
-        (error) => {},
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            setMedia(downloadURL);
-          });
-        }
-      );
+    const upload = async (file) => {
+      try {
+        const { data, url } = await uploadFile("blog", file.name, file);
+        console.log("Upload successful!");
+        console.log("Download URL:", url);
+        setMedia(url);
+        
+        // You can now use this URL to download the file
+        // For example, store it in state
+        // setFileUrl(url);
+      } catch (error) {
+        console.error("Upload failed:", error);
+      }
     };
-
-    file && upload();
+    
+    if (file) {
+      upload(file);
+    }
   }, [file]);
 
   if (status === "loading") {
@@ -141,7 +122,7 @@ const WritePage = () => {
           theme="bubble"
           value={value}
           onChange={setValue}
-          placeholder="Tell your story..."
+          placeholder="Write something interesting..."
         />
       </div>
       <button className={styles.publish} onClick={handleSubmit}>
