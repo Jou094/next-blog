@@ -1,9 +1,10 @@
-import Menu from '@/components/menu/Menu'
+
 import styles from './singlePage.module.css'
 import Image from 'next/image'
 import Comments from '@/components/comments/Comments'
 import EditPost from '@/components/editPost/EditPost'
 import { getAuthSession } from "@/utils/auth"
+import Menu from '@/components/Menu/Menu'
 
 const getData = async (slug) => {
   const res = await fetch(`http://localhost:3000/api/posts/${slug}`, {
